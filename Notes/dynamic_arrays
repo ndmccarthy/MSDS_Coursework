@@ -1,0 +1,37 @@
+class DynamicArray: 
+    
+    def __init__(self, initial_size=16, initial_fill=0, debug=False):
+        self.allocated_size = initial_size 
+        self.size = 0
+        self.array = [initial_fill] * initial_size
+        self.debug = debug
+    
+    # This allows us to directly access d[idx]
+    def __getitem__(self, idx):
+        assert idx >= 0 and idx < self.size 
+        return self.array[idx]
+    
+    # This allows us to write d[idx] = val 
+    def __setitem__(self, idx, val):
+        assert idx >= 0 and idx < self.size 
+        self.array[idx] = val
+    
+    def append(self, x):
+        # Do we have enough allocated size to just append x to the array?
+        if self.size >= self.allocated_size:
+            if self.debug: 
+                print(f'Ran out of memory: old allocated size: {self.allocated_size}, new allocated size is {2*self.allocated_size}')
+            # No, we have run out of pre-allocated memory
+            # Double the size of the array 
+            # Double the size of the allocated memory
+            self.allocated_size = 2 * self.allocated_size
+            old_array = self.array
+            # allocate and copy.
+            new_array = allocateMemory(self.allocated_size)
+            copyInto(old_array, new_array)
+            # update the array.
+            self.array = new_array
+        # Append the element to the end
+        self.array[self.size] = x
+        # Update its size.
+        self.size = self.size + 1
