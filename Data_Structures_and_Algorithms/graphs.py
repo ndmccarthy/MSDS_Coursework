@@ -31,9 +31,10 @@ Maximal Strongly Connected Components (MSCC)
 A graph may be partitioned into MSCCs such that all vertices are accounted for.
 This can be visualized in an MSCC supergraph, which must be a directed acyclic graph.
 '''
-from Functions.helper_functions import replace_Nones
+
+#import sorting_functions and helper_functions
 from disjointed_forests import DisjointForests
-from Functions.sorting_functions import quickSort
+
 
 def num_connected_components(graph): 
     # connected components refers to MSCCs

@@ -1,4 +1,4 @@
-from Data_Structures.graphs import *
+from Trees_and_Graphs.graphs import *
 
 g3 = UndirectedGraph(8)
 g3.add_edge(0,1,0.5)
