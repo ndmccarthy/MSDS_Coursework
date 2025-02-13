@@ -217,14 +217,15 @@ class WeightedUndirectedGraph:
         # sort edges in ascending order of weights
         self.edges = sorted(self.edges, key=lambda edg_data: edg_data[2])
 
-def compute_scc(graph=WeightedUndirectedGraph, weight_cap):
-    # finds MSCCs in a weighted graph using the properties of a Disjointed Forest
-    # create a disjoint forest with as many elements as number of vertices
+def compute_scc(weight_cap, graph=WeightedUndirectedGraph):
+    # finds MSCCs in a weighted graph using the properties of a disjointed forest
+    # this is essentially an implementation of Kruskal's Algorithm for finding Minimal Spanning Trees
+    # create a disjointed forest with as many elements as number of vertices
     num_vertices = graph.vertices
     forest = DisjointForests(num_vertices)
-    # reconstruct trees
     for ii in range(num_vertices):
         forest.make_set(ii)
+    # only consider edges with a weight <= weight_cap
     weights = []
     graph_edges = []
     for edge in graph.edges:
@@ -232,7 +233,9 @@ def compute_scc(graph=WeightedUndirectedGraph, weight_cap):
         node, vertex, weight = edge
         if weight <= weight_cap:
             weights.append(weight)
+    # consider the edges in order of weight (smallest to largest)
     quickSort(weights, 0, len(weights)-1)
+    # add eligible sorted edges to list
     forest_edges = []
     for entry in weights:
         for edge in graph_edges:
@@ -241,9 +244,10 @@ def compute_scc(graph=WeightedUndirectedGraph, weight_cap):
             if entry == weight:
                 forest_edges.append((node, vertex))
                 graph_edges.pop(edge_id)
+    # check if eligible edges should be included in MST/MSCC and add if true
     for edge in forest_edges:
-        
-        forest.union(edge)
-    # Next compute the strongly connected components using the union find data structure
-    # extract a set of sets from d
+        node, vertex = edge
+        if forest.find(node) != forest.find(vertex):
+            forest.union(edge)
+    # extract the trees from forest
     return forest.dictionary_of_trees()
