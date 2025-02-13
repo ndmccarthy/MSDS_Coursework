@@ -1,4 +1,5 @@
 from helper_functions import swap
+import random
 
 # Bubble Sort
 def bubbleSort(array):
@@ -64,7 +65,6 @@ def mergeSort(array):
 
 # Quicksort
 # partitions list using a pivot point recursively
-
 def testIfPartitioned(lst, pivot_id):
     # test if all elements at indices < pivot_id are all <= pivot and all elements at indices > pivot_id are all > pivot
     # return TRUE if the array is correctly partitioned around pivot and return FALSE otherwise
@@ -80,8 +80,8 @@ def testIfPartitioned(lst, pivot_id):
             return False
     return True
 
-def tryPartition(lst):
-    # implementation of Lomuto partitioning algorithm
+def partitionByLast(lst):
+    # implementation of Lomuto partitioning algorithm with pivot as last element
     lst_size = len(lst)
     last_id = lst_size - 1
     pivot = lst[last_id] # choose last element as the pivot.
@@ -95,7 +95,7 @@ def tryPartition(lst):
     swap(lst, ii+1, last_id) # place pivot in its correct place.
     return ii+1 # return the index where we placed the pivot
 
-def simplePartition(arr, pivot):
+def partitionByPivot(arr, pivot):
     # partitions array according to the given pivot
     # track where the first id of the pivot region is
     p_region_start = len(arr)
@@ -124,5 +124,24 @@ def simplePartition(arr, pivot):
     return arr
             
 def boundedSort(arr, max_val):
+    # quicksort function for arrays with a known range of values
     for jj in range(1, max_val):
-        simplePartition(arr, jj)
+        partitionByPivot(arr, jj)
+
+def partitionByRandom(arr, start, end):
+    pivot_id = random.randint(start, end)
+    pivot_val = arr[pivot_id]
+    ii = start - 1
+    for jj in range (start, end):
+        if arr[jj] <= pivot_val:
+            ii += 1
+            swap(arr, ii, jj)
+    swap(arr, ii+1, pivot_id)
+    return ii + 1
+
+def quickSort(arr, start, end):
+    # simple quicksort function using random pivot
+    if start < end:
+        pivot = partitionByRandom(arr, start, end)
+        quickSort(arr, start, pivot-1)
+        quickSort(arr, pivot+1, end)

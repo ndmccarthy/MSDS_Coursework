@@ -32,6 +32,8 @@ A graph may be partitioned into MSCCs such that all vertices are accounted for.
 This can be visualized in an MSCC supergraph, which must be a directed acyclic graph.
 '''
 from Functions.helper_functions import replace_Nones
+from disjointed_forests import DisjointForests
+from Functions.sorting_functions import quickSort
 
 def num_connected_components(graph): 
     # connected components refers to MSCCs
@@ -188,3 +190,60 @@ class UndirectedGraph:
         # Clean up the back edges so that if (ii,jj) is a back edge then jj cannot be ii's parent.
         non_trivial_back_edges = [(ii,jj) for (ii,jj) in dfs_back_edges if dfs_tree_parents[ii] != jj]
         return (dfs_tree_parents, non_trivial_back_edges, discovery_times, finish_times)
+
+class WeightedUndirectedGraph:
+    def __init__(self, num_vertices):
+        assert num_vertices >= 1, 'You are creating an empty graph -- disallowed'
+        self.vertices = num_vertices
+        self.edges = []
+        self.vertex_data = [None]*self.vertices
+        
+    def set_vertex_data(self, vertex, data):
+        assert 0 <= vertex < self.vertices
+        self.vertex_data[vertex] = data
+        
+    def get_vertex_data(self, vertex):
+        assert 0 <= vertex < self.vertices
+        return self.vertex_data[vertex] 
+        
+    def add_edge(self, node, vertex, weight):
+        assert 0 <= node < self.vertices
+        assert 0 <= vertex < self.vertices
+        assert node != vertex
+        # Make sure to add edge from node to vertex with weight
+        self.edges.append((node, vertex, weight))
+        
+    def sort_edges(self):
+        # sort edges in ascending order of weights
+        self.edges = sorted(self.edges, key=lambda edg_data: edg_data[2])
+
+def compute_scc(graph=WeightedUndirectedGraph, weight_cap):
+    # finds MSCCs in a weighted graph using the properties of a Disjointed Forest
+    # create a disjoint forest with as many elements as number of vertices
+    num_vertices = graph.vertices
+    forest = DisjointForests(num_vertices)
+    # reconstruct trees
+    for ii in range(num_vertices):
+        forest.make_set(ii)
+    weights = []
+    graph_edges = []
+    for edge in graph.edges:
+        graph_edges.append(edge)
+        node, vertex, weight = edge
+        if weight <= weight_cap:
+            weights.append(weight)
+    quickSort(weights, 0, len(weights)-1)
+    forest_edges = []
+    for entry in weights:
+        for edge in graph_edges:
+            node, vertex, weight = edge
+            edge_id = graph_edges.index(edge)
+            if entry == weight:
+                forest_edges.append((node, vertex))
+                graph_edges.pop(edge_id)
+    for edge in forest_edges:
+        
+        forest.union(edge)
+    # Next compute the strongly connected components using the union find data structure
+    # extract a set of sets from d
+    return forest.dictionary_of_trees()

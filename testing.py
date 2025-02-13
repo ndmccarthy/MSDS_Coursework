@@ -1,33 +1,43 @@
-from Functions.universal_family_hash_function import *
-from Functions.matrix_operations import *
+from Data_Structures.graphs import *
 
-A1 = [[0,1,0,1],[1,0,0,0],[1,0,1,1]]
-b1 = [1,1,1,0]
-c1 = matrix_multiplication(A1, b1)
-print('c1=', c1)
-assert c1 == [1,1,0] , 'Test 1 failed'
+g3 = UndirectedGraph(8)
+g3.add_edge(0,1,0.5)
+g3.add_edge(0,2,1.0)
+g3.add_edge(0,4,0.5)
+g3.add_edge(2,3,1.5)
+g3.add_edge(2,4,2.0)
+g3.add_edge(3,4,1.5)
+g3.add_edge(5,6,2.0)
+g3.add_edge(5,7,2.0)
+res = compute_scc(g3, 2.0)
+print('SCCs with threshold 2.0 computed by your code are:')
+assert len(res) == 2, f'Expected 2 SCCs but got {len(res)}'
+for (k, s) in res.items():
+    print(s)
+    
+# Let us check that your code returns what we expect.
+for (k, s) in res.items():
+    if (k in [0,1,2,3,4]):
+        assert (s == set([0,1,2,3,4])), '{0,1,2,3,4} should be an SCC'
+    if (k in [5,6,7]):
+        assert (s == set([5,6,7])), '{5,6,7} should be an SCC'
 
-A2 = [ [1,1],[0,1]]
-b2 = [1,0]
-c2 = matrix_multiplication(A2, b2)
-print('c2=', c2)
-assert c2 == [1, 0], 'Test 2 failed'
+        
+# Let us check that the thresholding works
+print('SCCs with threshold 1.5')
+res2 = compute_scc(g3, 1.5) # This cutsoff edges 2,4 and 5, 6, 7
+for (k, s) in res2.items():
+    print(s)
+assert len(res2) == 4, f'Expected 4 SCCs but got {len(res2)}'
 
-A3 = [ [1,1,1,0],[0,1,1,0]]
-b3 =  [1, 0,0,1]
-c3 = matrix_multiplication(A3, b3)
-print('c3=', c3)
-assert c3 == [1, 0], 'Test 3 failed'
-
-H = return_random_hash_function(5,4)
-print('H=', H)
-assert len(H) == 5, 'Test 5 failed'
-assert all(len(row) == 4 for row in H), 'Test 6 failed'
-assert all(elt == 0 or elt == 1 for row in H for elt in row ),  'Test 7 failed'
-
-H2 = return_random_hash_function(6,3)
-print('H2=', H2)
-assert len(H2) == 6, 'Test 8 failed'
-assert all(len(row) == 3 for row in H2),  'Test 9 failed'
-assert all(elt == 0 or elt == 1 for row in H2 for elt in row ), 'Test 10 failed'
-print('Tests passed: 10 points!')
+for (k, s) in res2.items():
+    if k in [0,1,2,3,4]:
+        assert (s == set([0,1,2,3,4])), '{0,1,2,3,4} should be an SCC'
+    if k in [5]:
+        assert s == set([5]), '{5} should be an SCC with just a single node.'
+    if k in [6]:
+        assert s == set([6]), '{6} should be an SCC with just a single node.'
+    if k in [7]:
+        assert s == set([7]), '{7} should be an SCC with just a single node.'
+        
+print('All tests passed: 10 points')
