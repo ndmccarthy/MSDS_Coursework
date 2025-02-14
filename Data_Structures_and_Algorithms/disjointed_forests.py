@@ -5,8 +5,6 @@ These are used to keep track of disjoint forests of trees. It is especially help
 Union by rank is also used to create trees that avoid linked lists.
 """
 
-from graphs import WeightedUndirectedGraph
-
 class DisjointForests:
     def __init__(self, nodes):
         # the disjoint forest represents a preset number of nodes in existence with the indices available in lists of parents and rank
@@ -21,7 +19,8 @@ class DisjointForests:
         trees = {}
         for node in range(self.nodes):
             if self.is_representative(node):
-                trees[node] = set(node)
+                trees[node] = set()
+                trees[node].add(node)
             if self.parents[node] != None:
                 root = self.find(node)
                 assert root in trees

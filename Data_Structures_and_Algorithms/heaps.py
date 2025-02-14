@@ -12,7 +12,7 @@ Their main properties are as follows:
         a. Max-Heap Property is just the reverse.
         b. A[0] is the minimum element in a minheap.
 '''
-from Functions.helper_functions import is_even, comparison
+from helper_functions import is_even, comparison
 
 def bubble_up(heap:list, maxheap:bool, child_index:int):
     child_value = heap[child_index]

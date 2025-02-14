@@ -32,7 +32,7 @@ A graph may be partitioned into MSCCs such that all vertices are accounted for.
 This can be visualized in an MSCC supergraph, which must be a directed acyclic graph.
 '''
 
-#import sorting_functions and helper_functions
+from helper_functions import replace_Nones
 from disjointed_forests import DisjointForests
 
 
@@ -218,37 +218,49 @@ class WeightedUndirectedGraph:
         # sort edges in ascending order of weights
         self.edges = sorted(self.edges, key=lambda edg_data: edg_data[2])
 
-def compute_scc(weight_cap, graph=WeightedUndirectedGraph):
-    # finds MSCCs in a weighted graph using the properties of a disjointed forest
-    # this is essentially an implementation of Kruskal's Algorithm for finding Minimal Spanning Trees
+def create_forest(graph=WeightedUndirectedGraph):
+    # helper function for compute_scc and compute_mst
     # create a disjointed forest with as many elements as number of vertices
     num_vertices = graph.vertices
     forest = DisjointForests(num_vertices)
     for ii in range(num_vertices):
         forest.make_set(ii)
-    # only consider edges with a weight <= weight_cap
-    weights = []
-    graph_edges = []
+    return forest
+
+def compute_scc(graph, weight_cap):
+    # graph MUST be WeightedUndirectedGraph
+    # finds MSCCs in a weighted graph using the properties of a disjointed forest
+    # this is essentially an implementation of Kruskal's Algorithm for finding Minimal Spanning Trees
+    forest = create_forest(graph)
+    # sort edges by weight and add as applicable
+    graph.sort_edges()
     for edge in graph.edges:
-        graph_edges.append(edge)
         node, vertex, weight = edge
+        # edges must have a weight <= weight_cap
         if weight <= weight_cap:
-            weights.append(weight)
-    # consider the edges in order of weight (smallest to largest)
-    quickSort(weights, 0, len(weights)-1)
-    # add eligible sorted edges to list
-    forest_edges = []
-    for entry in weights:
-        for edge in graph_edges:
-            node, vertex, weight = edge
-            edge_id = graph_edges.index(edge)
-            if entry == weight:
-                forest_edges.append((node, vertex))
-                graph_edges.pop(edge_id)
-    # check if eligible edges should be included in MST/MSCC and add if true
-    for edge in forest_edges:
-        node, vertex = edge
-        if forest.find(node) != forest.find(vertex):
-            forest.union(edge)
+            # add edge to the forest if the node/vertex are not in the same tree
+            if forest.find(node) != forest.find(vertex):
+                forest.union(node, vertex)
     # extract the trees from forest
     return forest.dictionary_of_trees()
+
+def compute_mst(graph=WeightedUndirectedGraph):
+    # finds minimal spanning tree (MST) using Kruskal's Alg.
+    # similar to compute_scc but does not have a weight_cap and returns list of edges (as tuples) followed by the weight of the entire MST
+    # create disjointed forest
+    forest = create_forest(graph)
+    # sort edges by weight and add as applicable
+    graph.sort_edges()
+    # create MST
+    mst_edges = []
+    mst_weight = 0
+    for edge in graph.edges:
+        node, vertex, weight = edge
+        # add edge to the forest if the node/vertex are not in the same tree
+        if forest.find(node) != forest.find(vertex):
+            forest.union(node, vertex)
+            # add edges to list
+            mst_edges.append(edge)
+            # add edge weight to mst_weight
+            mst_weight += weight
+    return (mst_edges, mst_weight)
