@@ -1,30 +1,29 @@
-from graphs import WeightedUndirectedGraph, compute_mst
+from makespan_scheduling import *
 
-g3 = WeightedUndirectedGraph(8)
-g3.add_edge(0,1,0.5)
-g3.add_edge(0,2,1.0)
-g3.add_edge(0,4,0.5)
-g3.add_edge(2,3,1.5)
-g3.add_edge(2,4,2.0)
-g3.add_edge(3,4,1.5)
-g3.add_edge(5,6,2.0)
-g3.add_edge(5,7,2.0)
-g3.add_edge(3,5,2.0)
+## BEGIN TESTS
+def do_test(times, m, expected):
+    (a, makespan) = greedy_makespan_min(times,m )
+    print('\t Assignment returned: ', a)
+    print('\t Claimed makespan: ', makespan)
+    assert compute_makespan(times, m, a) == makespan, 'Assignment returned is not consistent with the reported makespan'
+    assert makespan == expected, f'Expected makespan should be {expected}, your core returned {makespan}'
+    print('Passed')
+print('Test 1:')
+times = [2, 2, 2, 2, 2, 2, 2, 2, 3] 
+m = 3
+expected = 7
+do_test(times, m, expected)
 
-(mst_edges, mst_weight) = compute_mst(g3)
-print('Your code computed MST: ')
-for (i,j,wij) in mst_edges:
-    print(f'\t {(i,j)} weight {wij}')
-print(f'Total edge weight: {mst_weight}')
+print('Test 2:')
+times = [1]*20 + [5]
+m = 5
+expected =9
+do_test(times, m, expected)
 
-assert mst_weight == 9.5, 'Optimal MST weight is expected to be 9.5'
-
-assert (0,1,0.5) in mst_edges
-assert (0,2,1.0) in mst_edges
-assert (0,4,0.5) in mst_edges
-assert (5,6,2.0) in mst_edges
-assert (5,7,2.0) in mst_edges
-assert (3,5,2.0) in mst_edges
-assert (2,3, 1.5) in mst_edges or (3,4, 1.5) in mst_edges
-
-print('All tests passed: 10 points!')
+print('Test 3:')
+times = [1]*40 + [2]
+m = 20
+expected = 4
+do_test(times, m, expected)
+print('All tests passed: 15 points!')
+## END TESTS
