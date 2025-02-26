@@ -13,6 +13,7 @@ Their main properties are as follows:
         b. A[0] is the minimum element in a minheap.
 '''
 from helper_functions import is_even, comparison
+from graphs_classes import Vertex
 
 def bubble_up(heap:list, maxheap:bool, child_index:int):
     child_value = heap[child_index]
@@ -331,3 +332,79 @@ class MedianMaintainingHeap:
             self.balance_heap_sizes()
         else:
             self.hmax.delete_max()
+
+class PriorityQueue:
+    # Constructor:  Implement a empty heap data structure for prioritizing Vertex datastructure (from graphs)
+    def __init__(self):
+        self.q = [None] # pad it with one element
+
+    def insert(self, v=Vertex):
+        n = len(self.q)
+        self.q.append(v)
+        v.idx_in_priority_queue = n
+        self.bubble_up(n)
+        
+    def swap(self, i=Vertex, j=Vertex):
+        # Using new in-class function instead of helper function to update the positions of the vertices in the priority queue.
+        tmp = self.q[i]
+        self.q[i] = self.q[j]
+        self.q[i].idx_in_priority_queue = i
+        self.q[j] = tmp
+        self.q[j].idx_in_priority_queue = j
+        
+    # Using in-class bubble up and down functions instead of earlier ones because items in queue are Vertex data structure, not ints
+    def bubble_up(self, j=Vertex):
+        assert j >= 1
+        assert j < len(self.q)
+        if j == 1:
+            return
+        val = self.q[j].d
+        parent_idx = j // 2
+        parent_val = self.q[parent_idx].d
+        if val < parent_val:
+            self.swap(j, parent_idx)
+            self.bubble_up(parent_idx)
+        return
+    
+    def bubble_down(self, j=Vertex):
+        n = len(self.q)
+        left_child_idx = 2 * j
+        right_child_idx = 2 * j + 1
+        if left_child_idx >= n:
+            return
+        if right_child_idx >= n:
+            child_idx = left_child_idx
+            child_d = self.q[left_child_idx].d
+        else:
+            (child_d, child_idx) = min ( (self.q[left_child_idx].d, left_child_idx), 
+                                         (self.q[right_child_idx].d, right_child_idx)
+                                       )
+        if self.q[j].d > child_d:
+            self.swap(j, child_idx)
+            self.bubble_down(child_idx)
+        return 
+        
+    def get_and_delete_min(self):
+        # Find the minimum weight vertex and delete it from the heap.
+        # returns the deleted vertex back
+        n = len(self.q)
+        assert n > 1
+        v = self.q[1]
+        if n > 2: 
+            self.q[1] = self.q[n-1]
+            self.q[n-1].idx_in_priority_queue = 1
+            del self.q[n-1]
+            self.bubble_down(1)
+        #self.check_invariant()
+        return v
+    
+    def is_empty(self):
+        # returns bool
+        return len(self.q) == 1
+    
+    def update_vertex_weight(self, v=Vertex):
+        j = v.idx_in_priority_queue
+        n = len(self.q)
+        assert j >= 0 and j < n
+        self.bubble_down(j)
+        self.bubble_up(j)

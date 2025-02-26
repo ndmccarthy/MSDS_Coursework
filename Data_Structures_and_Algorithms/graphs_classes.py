@@ -33,69 +33,9 @@ This can be visualized in an MSCC supergraph, which must be a directed acyclic g
 '''
 
 from helper_functions import replace_Nones
-from disjointed_forests import DisjointForests
+from special_application_functions import fixPixelValues
 
 
-def num_connected_components(graph): 
-    # connected components refers to MSCCs
-    # graph must be an Undirected Graph class
-
-    # created list of nodes in descending order of finish
-    (dfs_tree_parents, non_trivial_back_edges, discovery_times, finish_times) = graph.dfs_traverse_graph()
-    descend_finish = []
-    while len(finish_times) > len(descend_finish):
-        last_value = max(finish_times)
-        last_finished = finish_times.index(last_value)
-        descend_finish.append(last_finished)
-        finish_times[last_finished] = float('-inf')
-
-    # transposed graph is the same as original graph for undirected graphs; no need to transpose
-    # complete DFS but remove nodes from descend_finish as they're visited
-    # when the original node is returned to in that iteration, MSCC is complete
-    num_nodes = graph.vertices
-    timer = DFSTimeCounter()
-    d_list = [None]*num_nodes
-    f_list = [None]*num_nodes
-    p_list = [None]*num_nodes
-    backedges = []
-    mscc_count = 0
-    for node in descend_finish:
-        graph.dfs_visit(node, timer, d_list, f_list, p_list, backedges)
-        for time in d_list:
-            if time != None:
-                node_visited = d_list.index(time)
-                visited_place = descend_finish.index(node_visited)
-                if visited_place != node:
-                    descend_finish.pop(visited_place)
-                d_list[node_visited] = None
-        mscc_count += 1
-    return mscc_count
-
-def find_all_nodes_in_cycle(graph): 
-    # graph is an UndirectedGraph class
-    # returns a set of the nodes that exist in a cycle (may not be the same cycle)
-    set_of_nodes = set()
-    (parents, nontrivial_backedges, d_times, f_times) = graph.dfs_traverse_graph()
-    print(f"Nontrivial Backedges: {nontrivial_backedges}")
-    print(f"Parents List: {parents}")
-    # if backedge exists, then a loop does
-    for edge in nontrivial_backedges:
-        # add nodes in backedge to set
-        first_node, second_node = edge
-        set_of_nodes.add(first_node)
-        set_of_nodes.add(second_node)
-        # look for parents
-        first_parent = parents[first_node]
-        second_parent = parents[second_node]
-        edge_parents = [first_parent, second_parent]
-        # add direct parents until loop is completed (parent is None)
-        for parent in edge_parents:
-            while parent is not None:
-                set_of_nodes.add(parent)
-                parent = parents[parent]
-    return set_of_nodes
-
-    
 class DFSTimeCounter:
     # This is a useful data structure for implementing a counter that counts the time.
     def __init__(self):
@@ -218,49 +158,93 @@ class WeightedUndirectedGraph:
         # sort edges in ascending order of weights
         self.edges = sorted(self.edges, key=lambda edg_data: edg_data[2])
 
-def create_forest(graph=WeightedUndirectedGraph):
-    # helper function for compute_scc and compute_mst
-    # create a disjointed forest with as many elements as number of vertices
-    num_vertices = graph.vertices
-    forest = DisjointForests(num_vertices)
-    for ii in range(num_vertices):
-        forest.make_set(ii)
-    return forest
+class Vertex: 
+    # This is the outline for a vertex data structure that relies on (x, y) coordinates for it's keys
+    # used in finding shortest path using Dijkstra's alg, but without calculating all possibilities
 
-def compute_scc(graph, weight_cap):
-    # graph MUST be WeightedUndirectedGraph
-    # finds MSCCs in a weighted graph using the properties of a disjointed forest
-    # this is essentially an implementation of Kruskal's Algorithm for finding Minimal Spanning Trees
-    forest = create_forest(graph)
-    # sort edges by weight and add as applicable
-    graph.sort_edges()
-    for edge in graph.edges:
-        node, vertex, weight = edge
-        # edges must have a weight <= weight_cap
-        if weight <= weight_cap:
-            # add edge to the forest if the node/vertex are not in the same tree
-            if forest.find(node) != forest.find(vertex):
-                forest.union(node, vertex)
-    # extract the trees from forest
-    return forest.dictionary_of_trees()
+    def __init__ (self,  i, j):
+        self.x = i # The x coordinate
+        self.y = j  # The y coordinate
+        self.d = float('inf') # the shortest path estimate
+        self.processed = False # Has this vertex's final shortest path distance been computed
+        # this is important for Dijksatra's algorithm
+        # We will track where the vertex is in the priority queue.
+        self.idx_in_priority_queue = -1 # The index of this vertex in the queue
+        self.pi = None # the parent vertex in the shortest path tree.
+        
+    def reset(self):
+        self.d = float('inf')
+        self.processed = False # Has this vertex's final shortest path distance been computed
+        # this is important for Dijksatra's algorithm
+        # We will track where the vertex is in the priority queue.
+        self.idx_in_priority_queue = -1 # The index of this vertex in the queue
+        self.pi = None # the parent vertex in the shortest path tree.
 
-def compute_mst(graph=WeightedUndirectedGraph):
-    # finds minimal spanning tree (MST) using Kruskal's Alg.
-    # similar to compute_scc but does not have a weight_cap and returns list of edges (as tuples) followed by the weight of the entire MST
-    # create disjointed forest
-    forest = create_forest(graph)
-    # sort edges by weight and add as applicable
-    graph.sort_edges()
-    # create MST
-    mst_edges = []
-    mst_weight = 0
-    for edge in graph.edges:
-        node, vertex, weight = edge
-        # add edge to the forest if the node/vertex are not in the same tree
-        if forest.find(node) != forest.find(vertex):
-            forest.union(node, vertex)
-            # add edges to list
-            mst_edges.append(edge)
-            # add edge weight to mst_weight
-            mst_weight += weight
-    return (mst_edges, mst_weight)
+
+class DirectedGraphFromImage:
+    def __init__(self, img):
+        self.img = img
+        self.coords2vertex = {} # construct a dictionary that maps coordinates [(i,j)] to corresponding vertices in graph
+        
+    def get_vertex_from_coords(self, i, j):
+        if (i,j) in self.coords2vertex: # is pixel (i,j) already there? 
+            return self.coords2vertex[(i,j)] # if yes, just return the vertex corresponding
+        v = Vertex(i, j)
+        self.coords2vertex[(i,j)] = v
+        return v
+    
+    def getEdgeWeight(self, u, v):
+        # Given (x,y) coordinates of two neighboring pixels, calculate the edge weight.
+         # We take the squared euclidean distance between the pixel values and add 0.1
+        img = self.img
+        # get edge weight for edge between u, v
+        i0,j0 = u.x, u.y
+        i1,j1 = v.x, v.y
+        height, width, _ = img.shape
+        # First make sure that the edge is legit
+        # Edges can only go from each pixel to neighboring pixel
+        assert i0 >= 0 and j0 >= 0 and i0 < width and j0 < height # pixel position valid?
+        assert i1 >= 0 and j1 >= 0 and i1 < width and j1 < height # pixel position valid?
+        assert -1 <= i0 - i1 <= 1 # edge between node and neighbor?
+        assert -1 <= j0 - j1 <= 1
+        px1 = fixPixelValues(img[j0,i0])
+        px2 = fixPixelValues(img[j1,i1])
+        return 0.1 + (px1[0] - px2[0])**2 + (px1[1] - px2[1])**2 + (px1[2]- px2[2])**2
+
+    # Function: get_list_of_neighbors
+    # Given a vertex in the graph, get its list of neighbors
+    #  I.e, for given vertex `vert` return a list [(v1, w1), (v2, w2),..,(vk,wk)]
+    #  Such that vert has an edge to v1 with weight w1, edge to v2 with weight w2 and ... 
+    #   edge to vk with weight wk
+    # Note that rather than build an adjacency list up front, we simply call this function
+    # to get the neighbors of a vertex.
+    def get_list_of_neighbors(self, vert):
+        img = self.img
+        i = vert.x
+        j = vert.y
+        height, width, _ = img.shape
+        lst = []
+        if i > 0:
+             # Get the adjacent vertex directly to the WEST
+            # What is the weight of the edge from pixel (i,j) to (i-1,j)
+            v0 = self.get_vertex_from_coords(i-1, j)
+            w0 = self.getEdgeWeight(vert, v0)
+            # Append the adjacent vertex and its weight.
+            lst.append((v0, w0))
+        if j > 0:
+            # Get the adjacent vertex directly to the SOUTH
+            v1 = self.get_vertex_from_coords(i, j-1)
+            w1 = self.getEdgeWeight(vert, v1)
+            # Append the adjacent vertex and its weight.
+            lst.append((v1, w1))    
+        if i < width-1:
+            # EAST
+            v2 = self.get_vertex_from_coords(i+1, j)
+            w2 = self.getEdgeWeight( vert, v2)
+            lst.append((v2, w2))
+        if j < height-1:
+            # NORTH
+            v3 = self.get_vertex_from_coords(i, j+1)
+            w3 = self.getEdgeWeight(vert, v3)
+            lst.append((v3, w3))
+        return lst

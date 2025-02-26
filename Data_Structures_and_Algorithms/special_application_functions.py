@@ -84,3 +84,7 @@ def check_sum_exists(set_a, set_b, set_c, max_num):
         if num <= max_num and coeffs_copy[num] > 0:
             return True
     return False
+ 
+def fixPixelValues(px):
+    # convert the RGB values into floating point to avoid an overflow that will give me wrong answers
+    return [ float(px[0]), float(px[1]), float(px[2]) ]
