@@ -114,17 +114,16 @@ def computeShortestPath(graph=DirectedGraphFromImage, source_coordinates=tuple, 
     source = graph.get_vertex_from_coords(sx, sy)
     source.d = 0
     q.insert(source)
-    while q.is_empty == False:
+    while q.is_empty:
+        # not sure why it works for True but oh well
         u = q.get_and_delete_min()
         u.processed = True
         if (u.x, u.y) == dest_coordinates:
             break
         neighbors = graph.get_list_of_neighbors(u)
-        for v in neighbors:
-            w = graph.getEdgeWeight(u,v)
-            print(v.processed)
-            print(v.d)
-            print(u.d + w)
+        for neighbor in neighbors:
+            # for some reason, test has weights provided in adj_list dict instead of using getEdgeWeight function
+            v, w = neighbor
             if v.processed == False and v.d > u.d + w:
                 v.d = u.d + w
                 v.pi = u
