@@ -35,3 +35,10 @@ def hashfun(hfun_rep, num):
 def hash_string(hfun_rep, hstr):
     n = hash(hstr)
     return hashfun(hfun_rep, n)    
+
+def createHashFamily(size=int):
+    hash_fam = []
+    for ii in range(size):
+        new_fun = get_random_hash_function()
+        hash_fam.append(new_fun)
+    return hash_fam

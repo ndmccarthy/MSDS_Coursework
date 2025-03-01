@@ -88,3 +88,114 @@ def check_sum_exists(set_a, set_b, set_c, max_num):
 def fixPixelValues(px):
     # convert the RGB values into floating point to avoid an overflow that will give me wrong answers
     return [ float(px[0]), float(px[1]), float(px[2]) ]
+
+def getSortedRank(a):
+    # Return a list rank of the same size of a
+    # rank[j] = i means that a[i] must be the j^th element in sorted order.
+    n = len(a)
+    a_marked = []
+    r = [None]*(n)
+    for id in range(n):
+        elt = a[id]
+        a_marked.append((elt, id))
+    a_marked = sorted(a_marked)
+    for id in range(n):
+        tup = a_marked[id]
+        (elt, og_idx) = tup
+        r[og_idx] = id
+    return r
+
+def findMinAbsDiff(a=list):
+    # minimizes the absolute difference between a[i] and a[j], where i < j
+    # returns tuple (i, j)
+    assert (len(a) > 2)
+    diff = float('inf')
+    ii = 0
+    jj = 1
+    first_id = ii
+    sec_id = jj
+    order = getSortedRank(a)
+    while ii < len(a)-1:
+        jj = ii + 1
+        ii_id = order.index(ii)
+        ii_elt = a[ii_id]
+        jj_id = order.index(jj)
+        jj_elt = a[jj_id]
+        if ii_elt == jj_elt:
+            return (ii_id, jj_id)
+        tmp_diff = abs(ii_elt-jj_elt)
+        if tmp_diff < diff:
+            diff = tmp_diff
+            if ii_id < jj_id:
+                first_id, sec_id = ii_id, jj_id
+            else:
+                first_id, sec_id = jj_id, ii_id
+        ii += 1
+    return (first_id, sec_id)
+
+def returnAllCommonElements(list_of_lists):
+    # returns a set of the elements that occur in every list
+    # each list is the same size
+    # initialize results set
+    current_results = set(list_of_lists[0]) # get rid of items as you loop through lists
+    # look through every element of every list
+    for lst in list_of_lists:
+        new_results = set()
+        for item in lst:
+            if item in current_results:
+                new_results.add(item)
+        current_results = new_results
+    return current_results
+
+def findCommonSorted(list1, list2):
+    # find the common elements between two sorted lists
+    # initialize results and counters for lists
+    results = []
+    ii = 0
+    jj = 0
+    while ii < len(list1) and jj < len(list2):
+        if list1[ii] == list2[jj]:
+            results.append(list1[ii])
+            ii += 1
+            jj += 1
+        elif list1[ii] > list2[jj]:
+            jj += 1
+        else:
+            ii += 1
+    return results
+
+def findAllCommonElementsSorted(list_of_lists):
+    assert len(list_of_lists) >= 2
+    # same input and results as returnAllCommonElements, except the lists are all sorted
+    results = list_of_lists[0]
+    for lst in list_of_lists:
+        results = findCommonSorted(results, lst)
+    return results
+
+def findMinContainingInterval(list1, list2):
+    # Finds the interval [low, high] that is the smallest and both lists have at least one element within the interval
+    # Assume a1, a2 are sorted
+    # Return a tuple (lo, hi) of the interval.
+    assert len(list1) > 0
+    assert len(list2) > 0
+    # initialize results and counters for lists
+    lo = float('-inf')
+    hi = float('inf')
+    diff = hi-lo
+    ii = 0
+    jj = 0
+    while ii < len(list1) and jj < len(list2) and diff != 0:
+        elt1 = list1[ii]
+        elt2 = list2[jj]
+        tmp_diff = abs(elt1 - elt2)
+        if tmp_diff < diff:
+            diff = tmp_diff
+            lo = min(elt1, elt2)
+            hi = max(elt1, elt2)
+            ii += 1
+            jj += 1
+        elif elt1 < elt2:
+            ii += 1
+        else:
+            jj += 1
+    return (lo, hi)

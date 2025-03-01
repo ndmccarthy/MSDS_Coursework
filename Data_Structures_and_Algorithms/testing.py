@@ -1,76 +1,50 @@
-from graphs_functions import computeShortestPath
-from graphs_classes import Vertex
+from special_application_functions import findMinContainingInterval
 
-class DummyGraphClass:
-    def __init__(self, adj_list, verts):
-        self.verts=verts
-        self.adj_list = adj_list
-        
-                
-    def get_vertex_from_coords(self, i, j):
-        assert (i,j) in self.verts
-        return self.verts[(i,j)]
-    
-    def get_list_of_neighbors(self, vert):
-        coords = (vert.x, vert.y)
-        if coords in self.adj_list:
-            return self.adj_list[(vert.x, vert.y)]
-        else:
-            return []
-    
-# Test 1
-verts = {(i,j): Vertex(i,j) for i in range(3) for j in range(3)}
-adj_list= {}
-def connect_nodes(src, dest, weight):
-    v1 = src
-    v2 = verts[dest]
-    if v1 in adj_list:
-        adj_list[v1].append((v2, weight))
-    else:
-        adj_list[v1] = [(v2, weight)]
-# Let's build a graph
-connect_nodes((0,0),(0,1),1.0)
-connect_nodes((0,0),(1,0),0.5)
-connect_nodes((1,0),(0,1), 0.5)
-connect_nodes((0,1),(0,0), 0.5)
-connect_nodes((1,0),(1,1), 0.5)
-connect_nodes((1,1), (2,2), 0.25)
-connect_nodes((1,1),(1,2), 0.5)
-connect_nodes((1,1),(2,1), 1.2)
-connect_nodes((2,1), (2,2), 0.25)
-connect_nodes((1,2), (2,2), 0.25)
+from random import randint
 
-graph = DummyGraphClass(adj_list, verts)
+def arrayHasEltInInterval(a, l, u):
+    assert l <= u
+    for elt in a:
+        if l <= elt and elt <= u:
+            return True
+    return False
 
-path, dist = computeShortestPath(graph, (0,0), (2,2))
-print(path)
+print('-- Test 1 --')
+a1 = [ 1, 4, 8, 9, 14, 15, 18 ]
+a2 = [ 5, 10,  19, 23]
+(l, u) = findMinContainingInterval(a1, a2)
+print(l, u)
+assert u -l == 1
+assert arrayHasEltInInterval(a1, l, u)
+assert arrayHasEltInInterval(a2, l, u)
+print('passed')
 
-assert(dist == 1.25) , ' shortest path distance from (0,0) to (2,2) must be 1.25'
-assert (path == [(0,0), (1,0), (1,1), (2,2)])
+print('-- Test 2 --')
+a1 = [1, 5, 10, 11, 18, 21, 28, 37]
+a2 = [ -4, 16, 32, 34]
+(l, u) =  findMinContainingInterval(a1, a2)
+print(l, u)
+assert u - l == 2
+assert arrayHasEltInInterval(a1, l, u)
+assert arrayHasEltInInterval(a2, l, u)
+print('passed')
 
-for (_,v) in verts.items():
-    v.reset()
+print('-- Test 3 -- ')
+a1 = list(range(0, 100000, 5))
+a2 = list(range(257, 1000000, 7))
+(l, u) =  findMinContainingInterval(a1, a2)
+print(l, u)
+assert u - l == 0
+assert arrayHasEltInInterval(a1, l, u)
+assert arrayHasEltInInterval(a2, l, u)
+print('passed')
 
-graph2 = DummyGraphClass(adj_list, verts)
-(path2, dist2) = computeShortestPath(graph2, (0,0),(1,2))
-print(path2)
-assert dist2 == 1.5, ' shortest path distance from (0,0) to (1,2) must be 1.5'
-assert path2[0] == (0,0)
-assert path2[-1] == (1,2)
+print('-- Test 4--')
+a1 = sorted([ randint(-1000000, 1000000) for i in range(100000)])
+a2 = sorted([ randint(0, 1000) for i in range(100)])
+(l, u) =  findMinContainingInterval(a1, a2)
+print(l, u)
+assert arrayHasEltInInterval(a1, l, u)
+assert arrayHasEltInInterval(a2, l, u)
 
-for (_,v) in verts.items():
-    v.reset()
-
-connect_nodes((2,2), (2,1), 0.5)
-connect_nodes((2,1), (1,1), 1.0)
-connect_nodes((1,1),(0,1), 0.5)
-
-
-graph3 = DummyGraphClass(adj_list, verts)
-(path3, dist3) = computeShortestPath(graph3, (2,2),(0,0))
-print(path3)
-assert(dist3 == 2.5)
-assert(path3[0]== (2,2))
-assert(path3[-1] == (0,0))
-
-print('All tests passed: 15 points!')
+print('All Tests Passed: 10 points.')
