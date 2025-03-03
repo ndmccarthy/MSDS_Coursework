@@ -1,56 +1,46 @@
-from CNF_SAT import *
+from shortest_path import *
 
-print('-- formula 1 --')
-f1 = SATInstance(4, [ [ 1, 2, -4], [-2, -3, 1], [-1, -2, -3] ])
-(e, t) = solve_formula(f1)
-print(e, t)
-assert e, 'f1 should be satisfiable'
-assert t != None, 'does not return a truth assignment'
-assert f1.evaluate(t) == 1, 'Truth assignment does not evaluate to expected value of true'
+def checkPath(width, height, circles, path):
+    assert path[0] == (0,0), 'Path must begin at (0,0)'
+    assert path[-1] == (width, height), f'Path must end at {(width, height)}'
+    (cur_x, cur_y) = path[0]
+    for (new_x, new_y) in path[1:]:
+        dx = new_x - cur_x
+        dy = new_y - cur_y
+        assert (dx,dy) in [(1,0),(-1,0), (0,1),(0,-1)]
+        assert 0 <= new_x and new_x <= width
+        assert 0 <= new_y and new_y <= height
+        assert not ptInCircle(new_x, new_y, circles)
+        cur_x, cur_y = new_x, new_y
+    return
+print('-- Test 1 -- ')
 
-print('-- formula 2 -- ')
-f2 = SATInstance(5, [[1,2,-5],[-4,-2,-1], [1, 3, 5], [-1, -5, -2], [1, 2, -4]])
-(e2, t2) = solve_formula(f2)
-print(e2, t2)
-assert e2, 'f2 must be satisfiable'
-assert t2 != None, 'does not return a truth assignment'
-assert f2.evaluate(t2) == 1, 'Truth assignment does not evaluate to expected value of true'
+circles = [(2,2,0.5), (1,2,1)]
+p = findPath(3, 3, circles)
+print(p)
+checkPath(3, 3, circles, p)
+print('-- Test 2 -- ')
 
-print('--formula 3 --')
-f3 = SATInstance(5, [[1, 2, -5, -4], [1, 2, -5, 4], [-1], [-2,-5], [5]])
-(e3, t3) = solve_formula(f3)
-print(e3, t3)
-assert not e3, 'f3 is unsatisfiable'
-assert t3 == None
+circles1 = [(2,2,1), (1,2,1)]
+p1 = findPath(3, 3, circles1)
+print(p1)
+assert p1 == [], 'Answer does not match with ours'
 
-print('--formula 4--')
-f4 = SATInstance(10, [
-  [-1, -5, -4, 8],
-  [1, 5, 8, 2],
-   [2, 1, 3, 9],
-    [-2, 4, 5, 6, -7],
-    [-1, 2, -1, 7, 8],
-    [2, -3, 1, 4, 9 ],
-    [1, 10],
-    [-10],
-    [1, 5, 8, 3, 10]
-])
+print('-- Test 3 -- ')
+p2 = findPath(5,5, circles1)
+print(p2)
+checkPath(5, 5, circles1, p2)
 
-(e4, t4) = solve_formula(f4)
-print(e4, t4)
-assert e4, 'f4 must be satisfiable'
-assert t4 != None, 'does not return a truth assignment'
-assert f4.evaluate(t4) == 1, 'Truth assignment does not evaluate to expected value of true'
+print('-- Test 4 --')
 
-print('--formula 5--')
-f5 = SATInstance(16,[
-     [1, 2], [-2 , -4],[3, 4], [-4, -5], [5, -6], [6, -7], [6, 7], [7, -16],
-     [8, -9],[8, -14], [9, 10], [9, -10], [-10, -11], [10, 12], [11, 12], [13, 14],
-     [14, -15], [15, 16]])
-(e5, t5) = solve_formula(f5)
-print(e5, t5)
-assert e5, 'f5 is satisfiable'
-assert t5 != None
-assert f5.evaluate(t5) == 1, 'Truth assignment does not evaluate to expected value of true'
+circles3 = [(1,2,0.5), (2,2,1), (3,3,1),(4,3,1)]
+p3 = findPath(5, 5, circles3)
+print(p3)
+checkPath(5, 5, circles3, p3)
 
-print('All tests passed: 20 points')
+print('-- Test 5 --')
+circles5 = [ (4,1, 1), (4,4,1),(2,6,1)]
+p5 = findPath(6,6,circles5)
+print(p5)
+assert p5 == []
+print('All tests passed: 15 points!')
