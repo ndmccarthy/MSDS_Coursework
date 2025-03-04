@@ -1,46 +1,93 @@
-from shortest_path import *
+from CNF_SAT import *
 
-def checkPath(width, height, circles, path):
-    assert path[0] == (0,0), 'Path must begin at (0,0)'
-    assert path[-1] == (width, height), f'Path must end at {(width, height)}'
-    (cur_x, cur_y) = path[0]
-    for (new_x, new_y) in path[1:]:
-        dx = new_x - cur_x
-        dy = new_y - cur_y
-        assert (dx,dy) in [(1,0),(-1,0), (0,1),(0,-1)]
-        assert 0 <= new_x and new_x <= width
-        assert 0 <= new_y and new_y <= height
-        assert not ptInCircle(new_x, new_y, circles)
-        cur_x, cur_y = new_x, new_y
-    return
-print('-- Test 1 -- ')
+print('--- Test 0 ---')
+# A simple triangle should be 3 colorable
+g0 = UndirectedGraph(3)
+g0.add_edge(0,1)
+g0.add_edge(1,2)
+g0.add_edge(0,2)
+coloring = solve_three_coloring(g0)
+print(coloring)
+assert coloring != None
+assert is_three_coloring(g0, coloring)
+print('Passed')
 
-circles = [(2,2,0.5), (1,2,1)]
-p = findPath(3, 3, circles)
-print(p)
-checkPath(3, 3, circles, p)
-print('-- Test 2 -- ')
+print('-- Test 1 --')
+# The "complete" graph on 4 vertices is not 3 colorable
+g1 = UndirectedGraph(4)
+g1.add_edge(0, 1)
+g1.add_edge(0, 2)
+g1.add_edge(0, 3)
+g1.add_edge(1, 2)
+g1.add_edge(1, 3)
+g1.add_edge(2, 3)
+coloring = solve_three_coloring(g1)
+assert coloring == None 
+print('Passed')
 
-circles1 = [(2,2,1), (1,2,1)]
-p1 = findPath(3, 3, circles1)
-print(p1)
-assert p1 == [], 'Answer does not match with ours'
+print('--Test 2--')
+# Make a chordal graph on 6 vertices
+g2 = UndirectedGraph(6)
+# make a 6 cycle
+g2.add_edge(0, 1)
+g2.add_edge(1, 2)
+g2.add_edge(2, 3)
+g2.add_edge(3, 4)
+g2.add_edge(4, 5)
+# add two chords
+g2.add_edge(0, 3)
+g2.add_edge(2, 4)
+coloring = solve_three_coloring(g2)
+print(coloring)
+assert coloring != None
+assert is_three_coloring(g2, coloring)
+print('Passed')
 
-print('-- Test 3 -- ')
-p2 = findPath(5,5, circles1)
-print(p2)
-checkPath(5, 5, circles1, p2)
+print('-- Test 3 --')
+g2.add_edge(1,3)
+g2.add_edge(0, 2)
+coloring = solve_three_coloring(g2)
+print(coloring)
+assert (coloring == None)
+print('Passed')
 
-print('-- Test 4 --')
 
-circles3 = [(1,2,0.5), (2,2,1), (3,3,1),(4,3,1)]
-p3 = findPath(5, 5, circles3)
-print(p3)
-checkPath(5, 5, circles3, p3)
+print('--- Test 4 ---')
+g1 = UndirectedGraph(5)
+g1.add_edge(0, 1)
+g1.add_edge(1, 2)
+g1.add_edge(2, 0)
+g1.add_edge(1, 3)
+g1.add_edge(3, 4)
+g1.add_edge(1, 4)
+g1.add_edge(4, 0)
+coloring = solve_three_coloring(g1)
+print(coloring)
+assert is_three_coloring(g1, coloring) 
+print('Passed')
 
-print('-- Test 5 --')
-circles5 = [ (4,1, 1), (4,4,1),(2,6,1)]
-p5 = findPath(6,6,circles5)
-print(p5)
-assert p5 == []
-print('All tests passed: 15 points!')
+print('-- Test 5 -- ')
+
+g2 = UndirectedGraph(7)
+g2.add_edge(2, 3)
+g2.add_edge(2, 1)
+g2.add_edge(2, 0)
+g2.add_edge(2, 4)
+g2.add_edge(3, 5)
+g2.add_edge(3, 6)
+g2.add_edge(5, 6)
+g2.add_edge(1, 0)
+g2.add_edge(1, 4)
+
+coloring = solve_three_coloring(g2)
+print(coloring)
+assert  is_three_coloring(g2, coloring)
+print('Passed')
+
+print('--Test 6--')
+g2.add_edge(0, 4)
+coloring = solve_three_coloring(g2)
+assert coloring == None
+print('passed')
+
+print('All test passed: 15 points!')
