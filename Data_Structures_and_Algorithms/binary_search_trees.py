@@ -148,6 +148,7 @@ class TreeNode:
         self.parent = parent_node # set the parent_node
         self.left = None # set the left child to None -- no left child to begin with
         self.right = None # set the right child to None - no right child to begin with.
+        self.depth = 1
     
     def is_root(self):
         return self.parent == None
@@ -171,6 +172,10 @@ class TreeNode:
                 self.right = new_node
             else: 
                 self.right.insert(new_key) # recusively call insert on right subtree.
+        #update the depth
+        left_depth = self.left.depth if self.left != None else 0
+        right_depth = self.right.depth if self.right != None else 0
+        self.depth = max(left_depth, right_depth) + 1
 
 def depthWiseTraverse(root_node=TreeNode):
     # returns a list of nodes in order of their height from largest to smallest (root, ..., furthest depth nodes)
@@ -209,3 +214,18 @@ def sumOfBranches(root_node):
             sums.append(current_sum)
     currentBranchSum(root_node, 0)
     return sums
+
+def getLongestPathLength(root):
+    return root.depth + 1
+        # Create recursive helper function
+        #def _height(node):
+        #    # Base case: if the node is None, return -1 (empty subtree)
+        #    if node is None:
+        #        return 1
+        #    # Recursively compute the height of the left and right subtrees
+        #    left_height = _height(node.left)
+        #    right_height = _height(node.right)
+#
+        #    # The height of the current node is the maximum of the left/right heights +1
+        #    return max(left_height, right_height) + 1
+        #return _height(root)

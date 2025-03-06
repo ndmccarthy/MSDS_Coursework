@@ -1,93 +1,36 @@
-from CNF_SAT import *
+from binary_search_trees import *
 
-print('--- Test 0 ---')
-# A simple triangle should be 3 colorable
-g0 = UndirectedGraph(3)
-g0.add_edge(0,1)
-g0.add_edge(1,2)
-g0.add_edge(0,2)
-coloring = solve_three_coloring(g0)
-print(coloring)
-assert coloring != None
-assert is_three_coloring(g0, coloring)
-print('Passed')
+def make_tree(l):
+    assert len(l) >= 1
+    rootNode = TreeNode(l[0])
+    for elt in l[1:]:
+        rootNode.insert(elt)
+    return rootNode
+
 
 print('-- Test 1 --')
-# The "complete" graph on 4 vertices is not 3 colorable
-g1 = UndirectedGraph(4)
-g1.add_edge(0, 1)
-g1.add_edge(0, 2)
-g1.add_edge(0, 3)
-g1.add_edge(1, 2)
-g1.add_edge(1, 3)
-g1.add_edge(2, 3)
-coloring = solve_three_coloring(g1)
-assert coloring == None 
-print('Passed')
-
-print('--Test 2--')
-# Make a chordal graph on 6 vertices
-g2 = UndirectedGraph(6)
-# make a 6 cycle
-g2.add_edge(0, 1)
-g2.add_edge(1, 2)
-g2.add_edge(2, 3)
-g2.add_edge(3, 4)
-g2.add_edge(4, 5)
-# add two chords
-g2.add_edge(0, 3)
-g2.add_edge(2, 4)
-coloring = solve_three_coloring(g2)
-print(coloring)
-assert coloring != None
-assert is_three_coloring(g2, coloring)
-print('Passed')
-
-print('-- Test 3 --')
-g2.add_edge(1,3)
-g2.add_edge(0, 2)
-coloring = solve_three_coloring(g2)
-print(coloring)
-assert (coloring == None)
-print('Passed')
-
-
-print('--- Test 4 ---')
-g1 = UndirectedGraph(5)
-g1.add_edge(0, 1)
-g1.add_edge(1, 2)
-g1.add_edge(2, 0)
-g1.add_edge(1, 3)
-g1.add_edge(3, 4)
-g1.add_edge(1, 4)
-g1.add_edge(4, 0)
-coloring = solve_three_coloring(g1)
-print(coloring)
-assert is_three_coloring(g1, coloring) 
-print('Passed')
-
-print('-- Test 5 -- ')
-
-g2 = UndirectedGraph(7)
-g2.add_edge(2, 3)
-g2.add_edge(2, 1)
-g2.add_edge(2, 0)
-g2.add_edge(2, 4)
-g2.add_edge(3, 5)
-g2.add_edge(3, 6)
-g2.add_edge(5, 6)
-g2.add_edge(1, 0)
-g2.add_edge(1, 4)
-
-coloring = solve_three_coloring(g2)
-print(coloring)
-assert  is_three_coloring(g2, coloring)
-print('Passed')
-
-print('--Test 6--')
-g2.add_edge(0, 4)
-coloring = solve_three_coloring(g2)
-assert coloring == None
+l = [55, 40, 70, 20, 47, 10, 43, 52, 50, 51]
+r = make_tree(l)
+path_len = getLongestPathLength(r)
+print(path_len)
+assert path_len == 7
 print('passed')
-
-print('All test passed: 15 points!')
+print('-- Test 2 --')
+l = [55, 40, 70, 47,  43, 52, 50, 51]
+r = make_tree(l)
+path_len = getLongestPathLength(r)
+print(path_len)
+assert path_len == 7
+print('-- Test 3 --')
+l = [26, 17, 41, 14, 21, 30, 47, 10, 16, 19, 23, 28, 38, 7, 12, 15, 20, 35, 39, 3]
+r = make_tree(l)
+path_len = getLongestPathLength(r)
+print(path_len)
+assert path_len == 10
+print('-- Test 4--')
+l = [7, 4, 18, 3, 6, 11, 19, 2, 9, 14, 22, 12, 17, 20, 21]
+r = make_tree(l)
+path_len = getLongestPathLength(r)
+print(path_len)
+assert path_len == 9
+print('All Tests Passed: 15 points!')
