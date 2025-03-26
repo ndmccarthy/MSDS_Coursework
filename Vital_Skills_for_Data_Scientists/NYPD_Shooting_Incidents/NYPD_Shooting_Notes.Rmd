@@ -1,0 +1,92 @@
+---
+title: "NYPD Shooting Incidents Analysis"
+author: "Nicole McCarthy"
+date: "March 20, 2025"
+output: pdf_document
+---
+
+## Summary of Data
+  This data set was downloaded from the  [*\textcolor{blue}{Data.gov}*](https://catalog.data.gov/dataset/nypd-shooting-incident-data-historic) website. It includes every shooting incident recorded by the New York Police Department (NYPD), from 2006 to September of 2023. Each incident includes the date, time, boro, various descriptions of the location, precinct, jurisdiction code, whether it is considered a murder, and the age group, sex, and race of both the perpetrator and victim. 
+
+## Cleaning Process
+1. Set dates in date format.
+2. Made times in seconds.
+    + Example: 11:32 AM == 41,520 seconds
+3. Removed all coordinate columns.
+4. Removed "(null)" and "UNKNOWN" values.
+5. In "PERP_AGE_GROUP", removed "1028", "1020", "940", and "224" values.
+6. In "PERP_SEX" and "VIC_SEX", removed all "U" values.
+7. In "VIC_AGE_GROUP", removed "1022".
+8. Replaced all missing data points with NA.
+
+## Visualizations and Analysis
+### Trends over Time
+```{r, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lubridate)
+```
+
+```{r, echo=FALSE}
+NYPD_Shootings_Data <- read.csv("data/NYPD_Shootings_Data_Cleaned.csv")
+
+boro_shootings <- NYPD_Shootings_Data %>%
+  group_by(YEAR = year(OCCUR_DATE), BORO) %>%
+  summarise(INCIDENTS = n(), .groups = "drop")
+
+boro_totals_plot <- ggplot(boro_shootings,
+                           aes(x = YEAR,
+                               y = INCIDENTS,
+                               color = BORO))+ 
+                           geom_line()+
+                           labs(title = "Shootings in NYC by Boro over Time",
+                                x = "Year",
+                                y = "Number of Incidents")
+boro_totals_plot
+```
+  Although the boros are different in their scale of incidents, their overall trends are comparable to one another. It would be interesting to see how the boros would compare by scale if the number of incidents were normalized for each boro's residential population. Additionally, a consideration for city-wide policies or events is needed to determine the overall decline in shootings, as well as the spike that occurred around 2020.
+
+### A Closer Look at Violence
+```{r, echo=FALSE}
+NYC_Murders <- filter(NYPD_Shootings_Data, STATISTICAL_MURDER_FLAG == TRUE)
+boro_murders <- NYC_Murders %>%
+  group_by(YEAR = year(OCCUR_DATE), BORO) %>%
+  summarise(MURDERS = n(), .groups = "drop")
+
+boro_murders_plot <- ggplot(boro_murders,
+                            aes(x = YEAR,
+                                y = MURDERS,
+                                color = BORO))+
+                      geom_line()+
+                      labs(title = "Murders in NYC by Boro over Time",
+                           x = "Year",
+                           y = "Number of Murders")
+boro_murders_plot
+```
+  This graph sheds some light on how crime (murder) has changed over time, independent of gun violence as a whole (including accidents, suicides, and other non-criminal activities). Of course, murders are only one facet of criminal gun violence, but it can be one indicator of the larger concern. It is clear that the overall trends have stayed the same as in the previous graph and those boros with higher shooting incidents also correlated with those of more murders. However, to get a better idea at whether murder rates have changed outside of the overall shooting incidents, we'll need to look at frequencies.\
+```{r, echo=FALSE}
+boro_murders$INCIDENTS <- boro_shootings$INCIDENTS
+boro_murders$MURDER_FREQUENCY <- (boro_murders$MURDERS/boro_murders$INCIDENTS)*100
+
+boro_murder_freq_plot <- ggplot(boro_murders,
+                            aes(x = YEAR,
+                                y = MURDER_FREQUENCY))+
+geom_point(aes(color = BORO))+
+labs(title = "Murder Frequency in NYC by Boro over Time",
+     x = "Year",
+     y = "Frequency of Murders")+
+geom_smooth(method = "lm",formula = 'y ~ x', se = TRUE)
+
+boro_murder_freq_plot
+```
+  This graph shows the percentage of shooting incidents that were murders in each boro as a scatter plot. The line of regression for all points on the plot is overlaid with a shade indicating the confidence interval. The line of regression indicates a slight increase in the frequency of murders over time. However, the confidence interval also suggests that a closer look at the statistical significance of this analysis is necessary.\
+  \
+  Because I have not taken the statistics courses for this degree yet, I'll forgo this analysis until a later date.
+
+## Conclusion
+  Further analysis is necessary to determine whether crime, specifically murder rates, have increased. However, even without this more in depth analysis, we can confidently state that it has not changed much.\
+  \
+  On the larger topic of shooting incidents (no matter their cause), there is an overall decline across New York City over the past two decades. Further research on the bump surrounding 2020 should be conducted. More data must be collected if we are to determine the causes for this overall decline.\
+  \
+  Because the researcher is not very familiar with the boros of New York City, there were minimal expectations from what the data would show. Furthermore, the researcher was particularly cautious when approaching the investigations on crime and murder frequency due to the popular beliefs that crime has risen across the United States. Keeping in mind both these beliefs and charges from experts that this is not the case, the researcher had no prior expectations for what trends may or may not be found within the NYC boros.
