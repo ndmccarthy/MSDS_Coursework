@@ -1,0 +1,9 @@
+---
+title: "COVID19_Analysis"
+output: html_document
+---
+
+County Population Data retrieved from: https://www.census.gov/data/tables/time-series/demo/popest/2020s-counties-total.html
+
+I am interested in determining whether the speed at which a country peaked in the number of cases affected the total number of deaths. I am also interested in how a country's existing population amount or density affected the speed at which it reached it's peak number of cases. Finally, I would like to investigate whether the speed at which a country peaked in its number of cases affected the rate that it's cases declined (in other words, did a faster arrival to the peak of the pandemic also result in a faster departure from the pandemic).
+
