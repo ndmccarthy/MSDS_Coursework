@@ -1,9 +1,187 @@
 ---
-title: "COVID19_Analysis"
-output: html_document
+title: "COVID-19 Deaths Based on Population Size"
+author: "Nicole McCarthy"
+date: "April 2, 2025"
+output:
+  pdf_document: default
 ---
 
-County Population Data retrieved from: https://www.census.gov/data/tables/time-series/demo/popest/2020s-counties-total.html
+# Introduction
+Tasked with completing some analysis on the Johns Hopkins COVID-19 datasets, I became curious about whether the size of a population affected the ratio of deaths to cases. In other words, was there a discernible trend connecting the number of people a government oversaw and the frequency with which cases became so intense that they resulted in death?I looked at the county, state, and country levels in order to see how changes in sovereignty and population scale affected my investigation.\
 
-I am interested in determining whether the speed at which a country peaked in the number of cases affected the total number of deaths. I am also interested in how a country's existing population amount or density affected the speed at which it reached it's peak number of cases. Finally, I would like to investigate whether the speed at which a country peaked in its number of cases affected the rate that it's cases declined (in other words, did a faster arrival to the peak of the pandemic also result in a faster departure from the pandemic).
+## Data Sources
+The [Johns Hopkins github](https://github.com/CSSEGISandData/COVID-19) on the pandemic provided everything but the country population data. They began collecting data on January 22, 2020 and stopped adding data on March 9, 2023.
+```{r, include=FALSE}
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(readr)
+library(tidyselect)
+library(ggplot2)
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+```
 
+```{r message=FALSE, include=FALSE}
+US_Cases <- read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
+Global_Cases <- read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv')
+US_Deaths <- read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv')
+Global_Deaths <- read_csv('https://raw.githubusercontent.com/CSSEGISandData/COVID-19/refs/heads/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv')
+```
+Country Populations were downloaded from the [World Bank website](https://data.worldbank.org/indicator/SP.POP.TOTL).
+```{r, message=FALSE, results='hide'}
+Global_Population <- read_csv("WorldBank_Country_Pop_Data.csv")
+Global_Population <- Global_Population[, c("Country Name", "2020")]
+colnames(Global_Population)[2] <- "Population" # rename 2020
+# get name column to match other data frames
+colnames(Global_Population)[1] <- "Country_Region" 
+```
+
+## Cleaning
+The majority of this section was spent getting the data sets into plottable formats that included total cases, total deaths, population, and death:case ratio (calculated from the totals columns).\
+The US_Cases data frame was organized by county, but the Province_State column was preserved for later use.
+```{r}
+US_Cases <- US_Cases %>%
+  filter(Admin2 != "Unassigned") %>% # get rid of unassigned deaths/cases
+  # get rid of deaths/cases occurring out of state
+  filter(Admin2 != str_detect(Admin2, "Out of")) %>% 
+  # get rid of UID, iso2, iso3, code3, FIPS, Admin2, Country_Region, Lat, and Long_
+  select(-c(1:6, 8:10)) 
+
+head(US_Cases)
+```
+This data frame and US_Deaths were manipulated to produce the desired columns described above in a new data frame called County_Sums.
+```{r}
+# clean up US_Deaths
+US_Deaths <- US_Deaths %>%
+  filter(Admin2 != "Unassigned") %>% # get rid of unassigned deaths/cases
+  filter(Admin2 != str_detect(Admin2, "Out of")) %>%
+  # get rid of UID, iso2, iso3, code3, FIPS, Admin2, 
+  # Province_State, Country_Region, Lat, and Long_
+  select(-c(1:10)) 
+
+# make data frame of totals of cases and deaths by county
+US_Deaths_Sum <- US_Deaths %>% 
+  # only include Combined_Key, Population, and last recorded date (final tally)
+  select(1, 2, ncol(US_Deaths)) 
+colnames(US_Deaths_Sum)[3] <- "Total_Deaths" # rename last column
+
+US_Cases_Sum <- US_Cases %>%
+  select(Combined_Key, Province_State, ncol(US_Cases))
+colnames(US_Cases_Sum)[3] <- "Total_Cases"
+
+US_Sums <- merge(US_Deaths_Sum, US_Cases_Sum)
+
+County_Sums <- US_Sums %>%
+  mutate(Death_Case_Ratio = Total_Deaths/Total_Cases) %>%
+  # get rid of data where deaths are larger than cases (incorrect)
+  filter(Death_Case_Ratio <= 1) %>% 
+  select(1, 4, 2, 3, 5, 6) # rearrange columns
+
+head(County_Sums)
+```
+Using the parent data frame for County_Sums, US_Sums, a data frame for state information was aggregated.
+```{r}
+State_Sums <- aggregate(US_Sums[, c("Population", "Total_Deaths", "Total_Cases")],
+                        by = list(State = US_Sums$Province_State),
+                        FUN = sum)
+State_Sums <- mutate(State_Sums, Death_Case_Ratio = Total_Deaths/Total_Cases)
+head(State_Sums)
+```
+Finally, a smiliar process was completed on Global_Cases and Global_Deaths to make an aggregate data frame titled Global_Sums. This was necessary because the original version provided a column for each Province/State of the coutnries included. However, I was only interested in the country-level data from this frame.
+```{r}
+# clean up data frames
+Global_Cases <- select(Global_Cases, "Country/Region", "3/9/23")
+colnames(Global_Cases)[2] <- "Total_Cases"
+
+Global_Deaths <- select(Global_Deaths, "Country/Region", "3/9/23")
+colnames(Global_Deaths)[2] <- "Total_Deaths"
+
+# gather sums of all countries
+Global_Cases <- aggregate(Global_Cases[, "Total_Cases"],
+                          by = list(Country_Region = Global_Cases$`Country/Region`),
+                          FUN = sum)
+
+Global_Deaths <- aggregate(Global_Deaths[, "Total_Deaths"],
+                          by = list(Country_Region = Global_Deaths$`Country/Region`),
+                          FUN = sum)
+
+# aggregate relevant data sets
+Global_Sums <- merge(Global_Cases, Global_Deaths)
+Global_Sums <- merge(Global_Sums, Global_Population)
+
+# calculate death:case column
+Global_Sums <- mutate(Global_Sums, Death_Case_Ratio = Total_Deaths/Total_Cases)
+
+head(Global_Sums)
+
+```
+
+# Analysis
+The plots of each level include a bit of filtering in order to eliminate outliers in population that would affect the visualizations and subsequent analysis. In each case, only a few points were eliminated.
+
+## County Level
+```{r, echo=FALSE, message=FALSE}
+Plottable_County_Sums <- filter(County_Sums, Population < 4000000)
+ggplot(Plottable_County_Sums,
+       aes(x = Population,
+           y = Death_Case_Ratio)) +
+  labs(title = "Ratio  of Deaths to Cases by Population in US Counties",
+       subtitle = "Totals for January 22, 2020 to March 9, 2023") +
+  xlab("Population Size") +
+  ylab("Ratio of Deaths to Cases") +
+  geom_point() +
+  geom_smooth()
+```
+Counties larger than 4,000,000 people were not included as they were outliers that made the rest of the plot difficult to read. The counties not shown include Cook, IL, Harris, TX, Los Angeles, CA, and Maricopa, AZ.
+In this plot, there is a slight downward trend in among counties with populations less than 100,000. This quickly evens out. To get a better look at this these smaller counties, we'll filter our data even futher.
+```{r, echo=FALSE, message=FALSE}
+Smallest_County_Sums <- filter(County_Sums, Population < 100000)
+ggplot(Smallest_County_Sums,
+       aes(x = Population,
+           y = Death_Case_Ratio)) +
+  labs(title = "Deaths:Cases in US Counties Smaller than 100,000",
+       subtitle = "Totals for January 22, 2020 to March 9, 2023") +
+  xlab("Population Size") +
+  ylab("Ratio of Deaths to Cases") +
+  geom_point() +
+  geom_smooth()
+```
+The reason for this downward trend is unclear. However, it is likely that more rural communities, ones that are more likely to have smaller populations, have higher death rates than those in urban areas. It is impossible to say from this data alone whether average population age, healthcare resources, or other factors are contributing to this.
+
+## State Level
+On the state level, we see a different trend. The larger the population, the higher the death to case ratio was. Again, we cannot say for sure from this data alone, but it seems that states with larger populations potentially had more cases than they had resources to deal with adequately.\
+Note that states with populations larger than 15 million are not shown. This includes California, Florida, New York, and Texas. Furthermore, Puerto Rico had a death to case ratio less than 0.003 and was not included as an outlier.
+
+```{r, echo=FALSE, message=FALSE}
+Plottable_State_Sums <- State_Sums %>%
+  filter(Population < 15000000) %>%
+  filter(Death_Case_Ratio > 0.003)
+ggplot(Plottable_State_Sums,
+       aes(x = Population,
+           y = Death_Case_Ratio)) +
+  labs(title = "Ratio  of Deaths to Cases by Population in US States",
+       subtitle = "Totals for January 22, 2020 to March 9, 2023") +
+  xlab("Population Size") +
+  ylab("Ratio of Deaths to Cases") +
+  geom_point() +
+  geom_smooth()
+```
+
+## Global Level
+```{r, echo=FALSE, message=FALSE}
+Plottable_Global_Sums <- filter(Global_Sums, Population < 500000000)
+ggplot(Plottable_Global_Sums,
+       aes(x = Population,
+           y = Death_Case_Ratio)) +
+  labs(title = "Ratio  of Deaths to Cases by Population of Countries",
+       subtitle = "Totals for January 22, 2020 to March 9, 2023") +
+  xlab("Population Size") +
+  ylab("Ratio of Deaths to Cases") +
+  geom_point() +
+  geom_smooth()
+```
+Finally, the global scale matches the trend seen on the state scale, but with a bit of leveling occurring once the population size reached approximately 50 million. It seems that once this threshold is met, the average death to case ratio arises no matter the resources or population.\
+Note that India and China are not included in this graph as they are population outliers of over 500 million.
+
+# Conclusions
+When considering the best course of action in the face of a future pandemic, we can group communities based on the following population sizes: < 100K and < 50 million. If we consider looking at populations greater than 50 million, there are no trends to help guide our decisions and it is likely we would be overwhelmed by such a larger category anyways. Resources should be divided among communities of less than 50 million such that those with larger populations get higher amounts of supplies. However, when breaking these smaller groups, those with less than 100 thousand residents will likely need more resources than were afforded during the COVID-19 pandemic. Further analysis is necessary to determine specific causes for these trends.
