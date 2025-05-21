@@ -127,34 +127,31 @@ def item_support(dataset):
 
 def reorder_transactions(dataset, min_support):
     
-#   A helper function that reorders the transaction items based on maximum support count. It is important that you finish
-#   the code in the previous cells since this function makes use of the support count dictionary calculated above.
-#   Input:
-#       1. dataset - A python dictionary containing the transactions. 
-#       2. min_support - A floating point variable representing the min_support value for the set of transactions.
-#   Output:
-#       1. updated_dataset - A dictionary representing the transaction items in sorted order of their support counts.
-
-    pruned_support = item_support(dataset)
+    '''
+        A helper function that reorders the transaction items based on maximum support count. It is important that you finish
+        the code in the previous cells since this function makes use of the support count dictionary calculated above.
+        Input:
+            1. dataset - A python dictionary containing the transactions. 
+            2. items - A python list representing all the items that are part of all the transactions.
+            3. min_support - A floating point variable representing the min_support value for the set of transactions.
+        Output:
+            1. updated_dataset - A dictionary representing the transaction items in sorted order of their support counts.
+    '''
+    pruned_support = item_support(dataset) 
     updated_dataset = dict()
-    min_count = len(dataset) * min_support
+    
     # This loop sorts the transaction items based on the item support counts
-    sorted_support = sorted(pruned_support.items(), key=lambda item: (-item[1], item[0]))
-    # sorted_support is a list of tuples rather than a dictionary so no need to use .items() attribute
-    # get rid of keys without min_support
-    for ii in range(len(sorted_support)):
-        key, value = sorted_support[ii]
-        if value < min_count:
-            sorted_support.pop(ii)
-    # create updated dataset in order
-    for transaction in dataset:
-        item_set = dataset[transaction]
-        updated_dataset[transaction] = []
-        for key, value in sorted_support:
-            if key in item_set:
-                updated_dataset[transaction].append(key)
-        if len(updated_dataset[transaction]) == 0:
-            updated_dataset.pop(transaction)
+    for key, value in dataset.items():
+        updated_dataset[key] = sorted(value, key=pruned_support.get, reverse=True)
+    
+    # Update the following loop to remove items that do not belong to the pruned_support dictionary
+    for key, value in updated_dataset.items():
+        updated_values = list()
+        for item in value:
+            if item in pruned_support:
+                updated_values.append(item) 
+        updated_dataset[key] = updated_values
+
     return updated_dataset
 
 def build_fp_tree(updated_dataset):
