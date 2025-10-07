@@ -2,3 +2,5 @@
 .Rhistory
 .Rproj.user/
 *.mp4
+Machine Learning/Unsupervised_ML/Clustering_Assignment/data.csv
+Machine Learning/Unsupervised_ML/PCA_Assignment/train_images.pkl
